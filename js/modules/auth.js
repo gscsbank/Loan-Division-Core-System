@@ -63,9 +63,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Trigger data sync after successful Firebase login
                 if (window.syncData) window.syncData();
             } catch (err) {
-                console.error("Firebase Login Error:", err);
-                // Attempt local fallback if Firebase fails but is configured (offline mode)
-                localAuth(entered);
+                console.error("Firebase Login Error:", err.code, err.message);
+                // If it's a critical auth error (like user not found), we should probably know
+                if (err.code === 'auth/user-not-found') {
+                    showError("Admin user not found in Firebase. Please create 'admin@gscs.bank' in Console.");
+                } else if (err.code === 'auth/wrong-password') {
+                    showError("Incorrect Firebase password.");
+                } else {
+                    // Possible network issue or other error, try local fallback
+                    localAuth(entered);
+                }
             }
         } else {
             // Local-Only Scenario (No Firebase Configured)
@@ -83,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (window.syncData) window.syncData();
             }
         } else {
-            showError();
+            showError("Invalid password. Please try again.");
         }
     }
 
@@ -94,13 +101,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 500);
     }
 
-    function showError() {
+    function showError(message) {
+        loginError.textContent = message || "An error occurred. Please try again.";
         loginError.classList.remove('hidden');
         loginPassword.classList.add('border-red-500');
         setTimeout(() => {
             loginError.classList.add('hidden');
             loginPassword.classList.remove('border-red-500');
-        }, 3000);
+        }, 5000);
     }
 
     // Global Logout

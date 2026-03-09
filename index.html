@@ -60,7 +60,7 @@
 
     <script>
         // Firebase Configuration
-        const firebaseConfig = {
+        window.firebaseConfig = {
             apiKey: "AIzaSyD54LifWiJblQ-4qlu5qkQbHmT26XUu-_0",
             authDomain: "loan-division-core-system.firebaseapp.com",
             projectId: "loan-division-core-system",
@@ -71,10 +71,11 @@
         };
 
         // Initialize Firebase
-        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
-            firebase.initializeApp(firebaseConfig);
+        if (window.firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            firebase.initializeApp(window.firebaseConfig);
             window.fs = firebase.firestore();
             window.auth = firebase.auth();
+            console.log("Firebase initialized successfully.");
         } else {
             console.warn("Firebase not configured. Cloud sync will be disabled.");
         }
