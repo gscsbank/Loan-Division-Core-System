@@ -275,13 +275,23 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTable(filteredLogs);
             updateSummary(filteredLogs);
 
-            const now = new Date();
-            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            if (filterVal === currentMonthStr && printFilterVal === 'All') {
-                updateDashboard(filteredLogs);
-            }
+            // Always update dashboard stats for the ACTUAL current month
+            updateDashboardStats();
         } catch (error) {
             console.error("Failed to load logs:", error);
+        }
+    }
+
+    async function updateDashboardStats() {
+        try {
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const allLogs = await db.officers.toArray();
+            const currentMonthLogs = allLogs.filter(log => log.date.startsWith(currentMonthStr));
+            const totalAcc = currentMonthLogs.reduce((sum, log) => sum + log.newAccounts, 0);
+            if (dashAccountsTotal) dashAccountsTotal.innerText = totalAcc;
+        } catch (e) {
+            console.error("Error updating dashboard accounts total:", e);
         }
     }
 

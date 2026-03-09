@@ -85,10 +85,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = logIdInput.value;
         const collection = parseFloat(inputCollection.value) || 0;
         try {
+            let monthVal = inputMonth.value;
+            if (monthVal && monthVal.includes('-')) {
+                const [y, m] = monthVal.split('-');
+                monthVal = `${y}-${m.padStart(2, '0')}`;
+            }
+
             const data = {
                 date: inputDate.value,
                 officerName: inputOfficer.value.trim(),
-                month: inputMonth.value,
+                month: monthVal,
                 collectionTotal: collection
             };
             if (id) {
@@ -113,6 +119,15 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadAndRender() {
         try {
             const allLogs = await db.savings.orderBy('month').toArray();
+
+            // Normalize all logs to ensure month is YYYY-MM
+            allLogs.forEach(log => {
+                if (log.month && log.month.includes('-')) {
+                    const [y, m] = log.month.split('-');
+                    log.month = `${y}-${m.padStart(2, '0')}`;
+                }
+            });
+
             const now = new Date();
             const currentYear = now.getFullYear();
             const selectedYear = yearFilter ? parseInt(yearFilter.value) : currentYear;
@@ -125,7 +140,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Update Dashboard Stat Card (Current real-time Month)
             const currentMonthStr = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             const currentMonthLogs = allLogs.filter(log => log.month === currentMonthStr);
-            const total = currentMonthLogs.reduce((sum, log) => sum + log.collectionTotal, 0);
+            const total = currentMonthLogs.reduce((sum, log) => sum + (parseFloat(log.collectionTotal) || 0), 0);
+
+            console.log("Dashboard Debug - Savings Detail:", {
+                targetMonth: currentMonthStr,
+                foundCount: currentMonthLogs.length,
+                total: total,
+                allUniqueMonths: [...new Set(allLogs.map(l => l.month))]
+            });
+
             if (dashSavingsTotal) {
                 dashSavingsTotal.innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
@@ -135,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const chartLabels = MONTHS.map(m => m.slice(0, 3));
                 const chartData = MONTH_KEYS.map(mk => {
                     return allLogs.filter(l => l.month === `${currentYear}-${mk}`)
-                        .reduce((sum, l) => sum + l.collectionTotal, 0);
+                        .reduce((sum, l) => sum + (parseFloat(l.collectionTotal) || 0), 0);
                 });
                 window.updateDashboardChart(chartLabels, chartData);
             }
@@ -144,6 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Failed to load savings logs:", error);
         }
     }
+
+    // Add same normalization to handleFormSubmit to prevent new bad data
 
     async function getOfficers() {
         // Try to get from db.settings first
