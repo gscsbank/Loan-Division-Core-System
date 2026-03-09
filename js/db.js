@@ -3,17 +3,17 @@
 const db = new Dexie('BankSystemDB');
 
 // Define database schema
-db.version(5).stores({
-    officers: '++id, name, designation, contact, photo',
-    fuelLogs: '++id, officerId, date, vehicleNo, startMileage, endMileage, liters, cost, photo',
-    savings: '++id, officerId, date, collectionDate, accountNo, name, amount, type',
-    customerActions: '++id, accountNo, date, time, action, officer, detail, photo, status',
-    customers: '++id, accountNo, name, NIC, address, phone, loanType, loanAmount, interestRate, status, photo',
-    schoolSavings: '++id, schoolName, date, accountNo, name, amount, collector',
+db.version(6).stores({
+    officers: '++id, name, date',
+    fuelLogs: '++id, officerId, date, vehicleNo',
+    savings: '++id, month, officerName, date',
+    customerActions: '++id, accountNo, date',
+    customers: '++id, accountNo, name, NIC',
+    schoolSavings: '++id, schoolName, date, accountNo',
     events: '++id, title, date, status',
-    recovery: '++id, accountNo, name, loanType, interestRate, amount, status, lastActionDate',
-    loanReports: '++id, date, applicantName, nic, phone',
-    postLoanReports: '++id, date, applicantName, nic, phone',
+    recovery: '++id, accountNo, status',
+    loanReports: '++id, date, applicantName, nic',
+    postLoanReports: '++id, date, applicantName, nic',
     settings: 'key, value'
 });
 
