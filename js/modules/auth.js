@@ -50,13 +50,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const email = document.getElementById('login-email').value.trim();
         const entered = loginPassword.value;
 
         // Firebase Auth Scenario
         if (window.auth && window.firebaseConfig.apiKey !== "YOUR_API_KEY") {
             try {
-                // We use a fixed email for the admin login to simplify (or anonymous auth)
-                const email = "admin@gscs.bank";
                 await firebase.auth().signInWithEmailAndPassword(email, entered);
                 sessionStorage.setItem('isLoggedIn', 'true');
                 hideLogin();
@@ -98,6 +97,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         loginOverlay.classList.add('animate__fadeOut');
         setTimeout(() => {
             loginOverlay.classList.add('hidden');
+            if (document.getElementById('login-email')) document.getElementById('login-email').value = '';
+            loginPassword.value = '';
         }, 500);
     }
 

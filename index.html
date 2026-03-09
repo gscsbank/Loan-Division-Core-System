@@ -102,14 +102,24 @@
                 <div class="h-1 w-12 bg-purple-600 mx-auto mt-4 rounded-full"></div>
             </div>
 
-            <form id="login-form" class="space-y-6">
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Admin
+                        Email</label>
+                    <div class="relative">
+                        <i class="ph-bold ph-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl"></i>
+                        <input type="email" id="login-email" required placeholder="admin@gscs.bank"
+                            class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-purple-600 focus:bg-white transition-all font-medium">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Admin
                         Password</label>
                     <div class="relative">
                         <i
                             class="ph-bold ph-lock-key absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl"></i>
-                        <input type="password" id="login-password" required placeholder="Enter password..."
+                        <input type="password" id="login-password" required placeholder="••••••••"
                             class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-purple-600 focus:bg-white transition-all font-medium">
                     </div>
                 </div>
