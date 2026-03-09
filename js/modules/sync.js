@@ -5,7 +5,7 @@
  */
 
 window.SyncManager = {
-    collections: ['customers', 'recovery', 'savings', 'officers', 'fuelLogs', 'schoolSavings', 'proposal', 'customerActions'],
+    collections: ['customers', 'recovery', 'savings', 'officers', 'fuelLogs', 'schoolSavings', 'events', 'customerActions', 'loanReports', 'postLoanReports', 'settings'],
     isEnabled: false,
 
     init: async function () {
