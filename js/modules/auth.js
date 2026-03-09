@@ -50,8 +50,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('login-email').value.trim();
+        const emailInput = document.getElementById('login-email');
+        const email = emailInput ? emailInput.value.trim() : "admin@gscs.bank";
         const entered = loginPassword.value;
+
+        // Show loading state
+        const btn = loginForm.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-circle-notch animate-spin mr-2"></i> Authenticating...';
 
         // Firebase Auth Scenario
         if (window.auth && window.firebaseConfig.apiKey !== "YOUR_API_KEY") {
@@ -59,23 +66,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await firebase.auth().signInWithEmailAndPassword(email, entered);
                 sessionStorage.setItem('isLoggedIn', 'true');
                 hideLogin();
-                // Trigger data sync after successful Firebase login
                 if (window.syncData) window.syncData();
             } catch (err) {
                 console.error("Firebase Login Error:", err.code, err.message);
-                // If it's a critical auth error (like user not found), we should probably know
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+
                 if (err.code === 'auth/user-not-found') {
-                    showError("Admin user not found in Firebase. Please create 'admin@gscs.bank' in Console.");
+                    showError(`Account ${email} not found. Check Firebase Console.`);
                 } else if (err.code === 'auth/wrong-password') {
-                    showError("Incorrect Firebase password.");
+                    showError("Incorrect password for this email.");
+                } else if (err.code === 'auth/network-request-failed') {
+                    showError("Internet connection error. Cloud sync unavailable.");
                 } else {
-                    // Possible network issue or other error, try local fallback
-                    localAuth(entered);
+                    showError(`Cloud Login Failed: ${err.message}`);
+                    // Optional: Allow local login if user insists on offline mode
+                    // localAuth(entered); 
                 }
             }
         } else {
-            // Local-Only Scenario (No Firebase Configured)
+            // Local-Only Scenario
             localAuth(entered);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
     });
 

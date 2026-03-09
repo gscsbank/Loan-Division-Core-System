@@ -141,5 +141,5 @@ window.syncData = () => window.SyncManager.pushLocalToCloud(true);
 
 // Auto-init Sync if Firebase is present
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => window.SyncManager.init(), 2000);
+    window.SyncManager.init();
 });
