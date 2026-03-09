@@ -17,12 +17,23 @@ window.SyncManager = {
 
         // Start listening for auth changes to trigger sync
         firebase.auth().onAuthStateChanged(user => {
+            const badge = document.getElementById('sync-status-badge');
             if (user) {
                 console.log("Sync active for user:", user.uid);
+                if (badge) {
+                    badge.innerHTML = '<i class="ph-bold ph-cloud-check mr-1"></i> Cloud Active';
+                    badge.classList.remove('text-red-400');
+                    badge.classList.add('text-emerald-400');
+                }
                 this.startSyncLoop();
                 this.listenForCloudUpdates();
             } else {
                 console.log("Sync paused: User logged out.");
+                if (badge) {
+                    badge.innerHTML = '<i class="ph-bold ph-cloud-slash mr-1"></i> Local Mode';
+                    badge.classList.remove('text-emerald-400');
+                    badge.classList.add('text-red-400');
+                }
             }
         });
     },
@@ -38,26 +49,43 @@ window.SyncManager = {
     },
 
     pushLocalToCloud: async function () {
-        if (!this.isEnabled || !firebase.auth().currentUser) return;
+        if (!this.isEnabled || !window.auth || !firebase.auth().currentUser) return;
         const uid = firebase.auth().currentUser.uid;
+        console.log("Starting cloud push for UID:", uid);
 
         for (const table of this.collections) {
-            const data = await db[table].toArray();
-
-            // Batch push to Firestore
-            const batch = fs.batch();
-            data.forEach(item => {
-                // Ensure every item has a string ID for Firestore
-                const docId = item.id ? item.id.toString() : Math.random().toString(36).substr(2, 9);
-                const docRef = fs.collection('users').doc(uid).collection(table).doc(docId);
-                batch.set(docRef, { ...item, lastSync: firebase.firestore.FieldValue.serverTimestamp() });
-            });
-
             try {
-                await batch.commit();
-                // console.log(`Table ${table} pushed to cloud.`);
+                const data = await db[table].toArray();
+                if (data.length === 0) continue;
+
+                // Batch push to Firestore (Firestore limit is 500 per batch)
+                const batchSize = 400;
+                for (let i = 0; i < data.length; i += batchSize) {
+                    const batch = fs.batch();
+                    const chunk = data.slice(i, i + batchSize);
+
+                    chunk.forEach(item => {
+                        // Handle both 'id' (auto-inc) and 'key' (settings)
+                        const rawId = item.id || item.key || Math.random().toString(36).substr(2, 9);
+                        const docId = rawId.toString();
+                        const docRef = fs.collection('users').doc(uid).collection(table).doc(docId);
+
+                        // Clean data for Firestore (remove any undefined values)
+                        const cleanData = JSON.parse(JSON.stringify(item));
+                        batch.set(docRef, {
+                            ...cleanData,
+                            lastSync: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+
+                    await batch.commit();
+                }
+                console.log(`✓ Table ${table} synchronized (${data.length} items)`);
             } catch (err) {
-                console.error(`Sync push error for ${table}:`, err);
+                console.error(`✗ Sync push error for ${table}:`, err.message);
+                if (err.message.includes("permission-denied")) {
+                    console.error("Critical: Firestore Security Rules are blocking the sync. Please check rules.");
+                }
             }
         }
     },
