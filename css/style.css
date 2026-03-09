@@ -1,0 +1,280 @@
+/* style.css */
+
+/* --- GLOBAL & UTILS --- */
+body {
+    /* More solid base for the new Emerald/Slate theme */
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+/* Custom Scrollbar for a premium feel */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.4);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.6);
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* --- THEME COMPONENTS --- */
+
+/* Nav Link Theme (Deep Purple) */
+.nav-link {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link.active {
+    background-color: white !important;
+    color: #4c1d95 !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link.active .nav-icon {
+    color: #4c1d95 !important;
+}
+
+.nav-link:not(.active) {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.nav-link:not(.active) .nav-icon {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.nav-link:not(.active):hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white !important;
+}
+
+.nav-link:not(.active):hover .nav-icon {
+    color: white !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Buttons Animation */
+button.bg-primary {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+}
+
+button.bg-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(26, 86, 219, 0.4);
+}
+
+/* Glassmorphism custom adjustments */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* --- LEAFLET MAP --- */
+.leaflet-container {
+    font-family: 'Outfit', sans-serif !important;
+    border-radius: 1rem;
+    z-index: 10;
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.custom-div-icon {
+    background: transparent;
+    border: none;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* --- PRINT MEDIA QUERIES --- */
+@media print {
+
+    /* Hide all non-printable elements */
+    #sidebar,
+    .mobile-menu-btn,
+    .module-view header button,
+    button[id^="btn-"],
+    button[class*="ph-trash"],
+    button[class*="ph-pencil"],
+    button[onclick*="updateEventStatus"],
+    .print-hide,
+    div[id^="modal-"],
+    #panel-add-location {
+        display: none !important;
+    }
+
+    /* Force page properties */
+    @page {
+        size: A4 portrait;
+        margin: 1.5cm;
+    }
+
+    /* Reset background and text colors for B&W economy */
+    body,
+    #content-area,
+    .module-view,
+    .glass-panel,
+    .bg-white\/90 {
+        background: white !important;
+        background-color: white !important;
+        background-image: none !important;
+        color: black !important;
+        min-height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    /* Professional Report Buffer Styling */
+    body.is-printing-report #print-report-buffer {
+        display: block !important;
+        background: white !important;
+        color: black !important;
+        width: 100% !important;
+        height: auto !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 9999 !important;
+    }
+
+    body.is-printing-report #sidebar,
+    body.is-printing-report header,
+    body.is-printing-report main,
+    body.is-printing-report #content-area,
+    body.is-printing-report .module-view,
+    body.is-printing-report .print-hide {
+        display: none !important;
+    }
+
+
+    /* Ensure only the active module is visible and takes full width */
+    #content-area {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .module-view.hidden {
+        display: none !important;
+    }
+
+    .module-view:not(.hidden) {
+        display: block !important;
+        position: static !important;
+        height: auto !important;
+    }
+
+    /* Tables optimized for print */
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-top: 1rem !important;
+    }
+
+    th,
+    td {
+        border-bottom: 1px solid #000 !important;
+        padding: 8px 4px !important;
+        color: black !important;
+        background: transparent !important;
+        font-size: 11pt !important;
+    }
+
+    th {
+        border-bottom: 2px solid #000 !important;
+        font-weight: bold !important;
+    }
+
+    /* Convert colored badges to text formats */
+    .bg-green-100,
+    .bg-blue-100,
+    .bg-red-100,
+    .bg-yellow-100,
+    .bg-emerald-100,
+    .bg-indigo-50,
+    .text-green-800,
+    .text-blue-800,
+    .text-red-800,
+    .text-yellow-800,
+    .text-emerald-800,
+    .text-orange-600,
+    .text-indigo-700 {
+        background: transparent !important;
+        color: black !important;
+        border: 1px dotted #666 !important;
+        padding: 2px 4px !important;
+    }
+
+    /* Charts handling */
+    canvas {
+        max-width: 100% !important;
+        max-height: 400px !important;
+        page-break-inside: avoid;
+    }
+
+    /* Avoid breaking rows */
+    tr,
+    .bg-white\/90 {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Show a print header */
+    .module-view:not(.hidden)::before {
+        content: "Galapitiyagama Sanasa Bank - Field Operations Report";
+        display: block;
+        font-size: 18pt;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 15px;
+        border-bottom: 2px solid black;
+        padding-bottom: 5px;
+    }
+
+    /* Specific Officer Print logic */
+    body.print-specific-officer #view-officers>div:first-child,
+    /* Hide Add Button Header */
+    body.print-specific-officer .module-view:not(.hidden)::before {
+        /* Hide default static heading */
+        display: none !important;
+    }
+}
