@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.showToast(id ? 'Log updated successfully' : 'Log saved successfully');
             closeModal();
             loadLogs();
-            
+
             // Proactively push to cloud
             if (window.SyncManager && window.SyncManager.pushLocalToCloud) {
                 window.SyncManager.pushLocalToCloud();
@@ -342,18 +342,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteOfficerLog = async (id) => {
-        const confirmed = await window.showConfirm(
-            'Delete Log',
-            'Are you sure you want to delete this log?',
-            'Yes, delete'
-        );
-        if (confirmed) {
+        if (await window.showConfirm("Delete Log?", "This action cannot be undone.")) {
             try {
                 await db.officers.delete(id);
-                window.showToast('Log deleted');
-                loadLogs();
+                if (window.SyncManager && window.SyncManager.deleteFromCloud) {
+                    await window.SyncManager.deleteFromCloud('officers', id);
+                }
+                window.showToast("Log deleted successfully");
+                loadLogs(); // Assuming loadLogs() is the correct function to refresh the list
             } catch (e) {
                 console.error(e);
+                window.showAlert('Error', 'Error deleting log: ' + e.message, 'error');
             }
         }
     };

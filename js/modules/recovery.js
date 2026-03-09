@@ -225,10 +225,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteRecoveryCase = async (id) => {
-        if (confirm('Are you sure you want to delete this recovery case?')) {
-            await db.recovery.delete(id);
-            showToast('Recovery case deleted.', 'warning');
-            loadRecoveryData();
+        if (await window.showConfirm('Delete Case?', 'Are you sure you want to delete this recovery case?', 'Yes, delete')) {
+            try {
+                await db.recovery.delete(id);
+                if (window.SyncManager && window.SyncManager.deleteFromCloud) {
+                    await window.SyncManager.deleteFromCloud('recovery', id);
+                }
+                showToast('Recovery case deleted.', 'warning');
+                loadRecoveryData();
+            } catch (e) {
+                console.error(e);
+            }
         }
     };
 });

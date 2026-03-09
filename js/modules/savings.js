@@ -337,10 +337,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.deleteSaving = async (id) => {
         try {
-            const confirmed = await window.showConfirm('Delete Collection', 'Delete this savings record?', 'Yes, delete');
-            if (confirmed) {
+            if (await window.showConfirm("Delete Entry?", "This action cannot be undone.")) {
                 await db.savings.delete(id);
-                window.showToast('Log deleted');
+                if (window.SyncManager && window.SyncManager.deleteFromCloud) {
+                    await window.SyncManager.deleteFromCloud('savings', id);
+                }
+                window.showToast("Entry deleted successfully");
                 loadAndRender();
             }
         } catch (e) { console.error(e); }

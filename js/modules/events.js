@@ -149,6 +149,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    window.deleteEvent = async function (id) {
+        const confirmed = await window.showConfirm(
+            'Delete Proposal',
+            'Are you sure you want to delete this proposal?',
+            'Yes, delete'
+        );
+        if (confirmed) {
+            try {
+                await db.events.delete(id);
+                if (window.SyncManager && window.SyncManager.deleteFromCloud) {
+                    await window.SyncManager.deleteFromCloud('events', id);
+                }
+                window.showToast('Proposal deleted');
+                loadEvents();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    };
+
     window.generateEventPDF = async function (id) {
         try {
             const evt = await db.events.get(id);

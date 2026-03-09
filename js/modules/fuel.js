@@ -240,7 +240,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirmed) {
             try {
                 await db.fuelLogs.delete(id);
-                window.showToast('Log deleted');
+                if (window.SyncManager && window.SyncManager.deleteFromCloud) {
+                    await window.SyncManager.deleteFromCloud('fuelLogs', id);
+                }
+                window.showToast('Log deleted successfully');
                 loadLogs();
             } catch (e) {
                 console.error(e);

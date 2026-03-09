@@ -133,6 +133,19 @@ window.SyncManager = {
                     });
                 });
         });
+    },
+
+    deleteFromCloud: async function (tableName, id) {
+        if (!this.isEnabled || !window.fs) return;
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        try {
+            await window.fs.collection('users').doc(user.uid).collection(tableName).doc(id.toString()).delete();
+            console.log(`Deleted ${id} from cloud table ${tableName}`);
+        } catch (error) {
+            console.error(`Error deleting ${id} from cloud ${tableName}:`, error);
+        }
     }
 };
 

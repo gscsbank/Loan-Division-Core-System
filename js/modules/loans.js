@@ -672,6 +672,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirmed) {
             try {
                 await db.loanReports.delete(id);
+                if (window.SyncManager && window.SyncManager.deleteFromCloud) {
+                    await window.SyncManager.deleteFromCloud('loanReports', id);
+                }
                 window.showToast('Inspection deleted');
                 loadLoanReports();
             } catch (e) {

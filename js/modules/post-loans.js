@@ -65,6 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const id = Number(e.currentTarget.getAttribute('data-id'));
                         if (await window.showConfirm("Delete Report?", "This action cannot be undone.")) {
                             await db.postLoanReports.delete(id);
+                            if (window.SyncManager && window.SyncManager.deleteFromCloud) {
+                                await window.SyncManager.deleteFromCloud('postLoanReports', id);
+                            }
                             window.showToast("Report deleted successfully");
                             loadPostLoans();
                             formPostLoan.reset();
