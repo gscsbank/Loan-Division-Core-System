@@ -48,10 +48,15 @@ window.SyncManager = {
         this.pushLocalToCloud();
     },
 
-    pushLocalToCloud: async function () {
-        if (!this.isEnabled || !window.auth || !firebase.auth().currentUser) return;
+    isSyncing: false,
+    pushLocalToCloud: async function (isManual = false) {
+        if (this.isSyncing || !this.isEnabled || !window.auth || !firebase.auth().currentUser) return;
+        this.isSyncing = true;
+
         const uid = firebase.auth().currentUser.uid;
         console.log("Starting cloud push for UID:", uid);
+        let totalSynced = 0;
+        let syncFailed = false;
 
         for (const table of this.collections) {
             try {
@@ -79,15 +84,28 @@ window.SyncManager = {
                     });
 
                     await batch.commit();
+                    totalSynced += chunk.length;
                 }
                 console.log(`✓ Table ${table} synchronized (${data.length} items)`);
             } catch (err) {
                 console.error(`✗ Sync push error for ${table}:`, err.message);
+                syncFailed = true;
                 if (err.message.includes("permission-denied")) {
                     console.error("Critical: Firestore Security Rules are blocking the sync. Please check rules.");
                 }
             }
         }
+
+        if (isManual) {
+            if (syncFailed) {
+                window.showToast?.(`Cloud Sync Failed: Some items could not be synced.`, 'error');
+            } else if (totalSynced > 0) {
+                window.showToast?.(`Cloud Sync Complete: ${totalSynced} items synced.`);
+            } else {
+                window.showToast?.(`Cloud Sync Complete: No new items to sync.`);
+            }
+        }
+        this.isSyncing = false;
     },
 
     /**
@@ -119,7 +137,7 @@ window.SyncManager = {
 };
 
 // Global helper for manual sync
-window.syncData = () => window.SyncManager.pushLocalToCloud();
+window.syncData = () => window.SyncManager.pushLocalToCloud(true);
 
 // Auto-init Sync if Firebase is present
 document.addEventListener('DOMContentLoaded', () => {
