@@ -99,9 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.showToast(id ? 'Log updated successfully' : 'Collection saved successfully');
             closeModal();
             loadAndRender();
+
+            // Proactively push to cloud
+            if (window.SyncManager && window.SyncManager.pushLocalToCloud) {
+                window.SyncManager.pushLocalToCloud();
+            }
         } catch (error) {
             console.error("Failed to save savings log:", error);
-            window.showAlert('Error', 'Error saving savings log.', 'error');
+            window.showAlert('Error', 'Error saving savings log: ' + error.message, 'error');
         }
     }
 
@@ -111,8 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedYear = yearFilter ? parseInt(yearFilter.value) : today.getFullYear();
             const yearLogs = allLogs.filter(log => log.month && log.month.startsWith(selectedYear.toString()));
 
-            renderPivotTable(yearLogs, selectedYear);
-            updateCharts(yearLogs, selectedYear);
+            await renderPivotTable(yearLogs, selectedYear);
+            await updateCharts(yearLogs, selectedYear);
 
             // Dashboard total (current month)
             const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -125,12 +130,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function getOfficers() {
+    async function getOfficers() {
+        // Try to get from db.settings first
+        try {
+            const settingsData = await db.settings.get('bank_field_officers');
+            if (settingsData && settingsData.value) return settingsData.value;
+        } catch (e) { }
+
         const stored = localStorage.getItem('bank_field_officers');
         return stored ? JSON.parse(stored) : [];
     }
 
-    function renderPivotTable(logs, year) {
+    async function renderPivotTable(logs, year) {
         const pivotHead = document.getElementById('savings-pivot-head');
         const pivotBody = document.getElementById('savings-pivot-body');
         const pivotFoot = document.getElementById('savings-pivot-foot');
@@ -148,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Get officers that have at least one entry this year
-        const allOfficers = getOfficers();
+        const allOfficers = await getOfficers();
         const activeOfficers = allOfficers.length > 0 ? allOfficers :
             [...new Set(logs.map(l => l.officerName))].sort();
 
@@ -228,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    function updateCharts(logs, year) {
+    async function updateCharts(logs, year) {
         // Monthly totals bar chart
         const monthlyTotals = MONTH_KEYS.map(mk => {
             return logs.filter(l => l.month === `${year}-${mk}`)
@@ -268,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Officer-wise grouped bar chart
-        const officers = getOfficers().length > 0 ? getOfficers() :
+        const officers = (await getOfficers()).length > 0 ? await getOfficers() :
             [...new Set(logs.map(l => l.officerName))].sort();
 
         const colors = ['#1e3a5f', '#64748b', '#94a3b8', '#3b82f6', '#8b5cf6', '#f59e0b'];
@@ -344,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const allLogs = await db.savings.toArray();
         const yearLogs = allLogs.filter(log => log.month && log.month.startsWith(selectedYear.toString()));
 
-        const officers = getOfficers().length > 0 ? getOfficers() :
+        const officers = (await getOfficers()).length > 0 ? await getOfficers() :
             [...new Set(yearLogs.map(l => l.officerName))].sort();
 
         // Build pivot

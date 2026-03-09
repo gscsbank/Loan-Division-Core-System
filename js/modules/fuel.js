@@ -49,30 +49,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (input) input.addEventListener('input', calculateDistance);
     });
 
-    // Populate officer dropdown from localStorage
-    function populateFuelPrintFilter() {
-        const stored = localStorage.getItem('bank_field_officers');
-        const officers = stored ? JSON.parse(stored) : [];
-        if (fuelPrintFilter) {
-            const currentVal = fuelPrintFilter.value;
-            fuelPrintFilter.innerHTML = '<option value="" disabled>Select Officer</option>';
-            officers.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.innerText = name;
-                fuelPrintFilter.appendChild(opt);
-            });
-            fuelPrintFilter.value = currentVal || '';
+    // Populate officer dropdown (Wait for officers.js to do it or helper)
+    async function populateFuelPrintFilter() {
+        if (!fuelPrintFilter) return;
+        // Try to get from db.settings first
+        let officers = [];
+        try {
+            const settingsData = await db.settings.get('bank_field_officers');
+            if (settingsData && settingsData.value) officers = settingsData.value;
+        } catch (e) { }
+
+        if (officers.length === 0) {
+            const stored = localStorage.getItem('bank_field_officers');
+            officers = stored ? JSON.parse(stored) : [];
         }
+
+        const currentVal = fuelPrintFilter.value;
+        fuelPrintFilter.innerHTML = '<option value="All">All Officers</option>';
+        officers.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.innerText = name;
+            fuelPrintFilter.appendChild(opt);
+        });
+        fuelPrintFilter.value = currentVal || 'All';
     }
 
-    populateFuelPrintFilter();
-
-    // Re-populate if officers list changes (listen to storage events)
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'bank_field_officers') populateFuelPrintFilter();
-    });
-
+    // listen for module switch to re-populate
     document.addEventListener('moduleSwitched', (e) => {
         if (e.detail.target === 'fuel' || e.detail.target === 'dashboard') {
             populateFuelPrintFilter();
@@ -135,9 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.showToast(id ? 'Trip updated successfully' : 'Trip logged successfully');
             closeModal();
             loadLogs();
+
+            // Proactively push to cloud
+            if (window.SyncManager && window.SyncManager.pushLocalToCloud) {
+                window.SyncManager.pushLocalToCloud();
+            }
         } catch (error) {
             console.error("Failed to save fuel log:", error);
-            window.showAlert('Error', 'Error saving log. Please try again.', 'error');
+            window.showAlert('Error', 'Error saving log: ' + error.message, 'error');
         }
     }
 

@@ -46,20 +46,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Officer Names Management Logic ---
-    function getSavedOfficers() {
+    async function getSavedOfficers() {
+        // Try to get from db.settings first (Cloud synced)
+        try {
+            const settingsData = await db.settings.get('bank_field_officers');
+            if (settingsData && settingsData.value && settingsData.value.length > 0) {
+                return settingsData.value;
+            }
+        } catch (e) {
+            console.error("Error reading from db.settings:", e);
+        }
+
+        // Fallback to localStorage
         const stored = localStorage.getItem('bank_field_officers');
-        if (stored) return JSON.parse(stored);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed && parsed.length > 0) {
+                // Migrate to db.settings
+                await db.settings.put({ key: 'bank_field_officers', value: parsed });
+                return parsed;
+            }
+        }
+
+        // Default officers
         const defaults = ['Kamal Perera', 'Sunil Shantha', 'Nimal Silva'];
         localStorage.setItem('bank_field_officers', JSON.stringify(defaults));
+        await db.settings.put({ key: 'bank_field_officers', value: defaults });
         return defaults;
     }
 
-    function saveOfficers(officers) {
+    async function saveOfficers(officers) {
         localStorage.setItem('bank_field_officers', JSON.stringify(officers));
+        await db.settings.put({ key: 'bank_field_officers', value: officers });
+        // Trigger sync if possible
+        if (window.SyncManager && window.SyncManager.pushLocalToCloud) {
+            window.SyncManager.pushLocalToCloud();
+        }
     }
 
-    function populateOfficerDropdowns() {
-        const officers = getSavedOfficers();
+    async function populateOfficerDropdowns() {
+        const officers = await getSavedOfficers();
 
         const selectsToPopulate = [
             logOfficerNameSelect,
@@ -70,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         selectsToPopulate.forEach(selectEl => {
             if (selectEl) {
+                const currentValue = selectEl.value;
                 selectEl.innerHTML = '';
                 officers.forEach(name => {
                     const opt = document.createElement('option');
@@ -77,27 +104,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     opt.innerText = name;
                     selectEl.appendChild(opt);
                 });
+                if (currentValue) selectEl.value = currentValue;
             }
         });
 
         if (officerPrintFilter) {
             const currentPrintFilter = officerPrintFilter.value;
-            officerPrintFilter.innerHTML = '<option value="" disabled>Select Officer</option>';
+            officerPrintFilter.innerHTML = '<option value="All">All Officers</option>';
             officers.forEach(name => {
                 const opt = document.createElement('option');
                 opt.value = name;
                 opt.innerText = name;
                 officerPrintFilter.appendChild(opt);
             });
-            officerPrintFilter.value = currentPrintFilter || '';
+            officerPrintFilter.value = currentPrintFilter || 'All';
         }
     }
 
     populateOfficerDropdowns();
     renderManageOfficersList(); // Initial render for dashboard widget
 
-    function renderManageOfficersList() {
-        const officers = getSavedOfficers();
+    async function renderManageOfficersList() {
+        const officers = await getSavedOfficers();
         if (officersListUl) {
             officersListUl.innerHTML = '';
             if (officers.length === 0) {
@@ -129,11 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Yes, remove'
                 );
                 if (confirmed) {
-                    const officers = getSavedOfficers();
+                    const officers = await getSavedOfficers();
                     officers.splice(index, 1);
-                    saveOfficers(officers);
-                    populateOfficerDropdowns();
-                    renderManageOfficersList();
+                    await saveOfficers(officers);
+                    await populateOfficerDropdowns();
+                    await renderManageOfficersList();
                     window.showToast('Officer removed successfully');
                 }
             }
@@ -141,17 +169,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (formAddOfficerName) {
-        formAddOfficerName.addEventListener('submit', (e) => {
+        formAddOfficerName.addEventListener('submit', async (e) => {
             e.preventDefault();
             const newName = newOfficerNameInput.value.trim();
             if (newName) {
-                const officers = getSavedOfficers();
+                const officers = await getSavedOfficers();
                 if (!officers.includes(newName)) {
                     officers.push(newName);
                     officers.sort();
-                    saveOfficers(officers);
-                    populateOfficerDropdowns();
-                    renderManageOfficersList();
+                    await saveOfficers(officers);
+                    await populateOfficerDropdowns();
+                    await renderManageOfficersList();
                     window.showToast('Officer added successfully');
                 } else {
                     window.showAlert('Error', 'Officer name already exists.', 'error');
@@ -189,15 +217,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const id = logIdInput.value;
         const dateStr = document.getElementById('log-date').value;
-        const name = document.getElementById('log-officer-name').value.trim();
-        const accounts = parseInt(document.getElementById('log-accounts').value, 10);
+        const nameSelect = document.getElementById('log-officer-name');
+        const name = nameSelect ? nameSelect.value.trim() : "";
+        const accountsInput = document.getElementById('log-accounts');
+        const accounts = accountsInput ? parseInt(accountsInput.value, 10) : 0;
         const accountNumbers = document.getElementById('log-account-numbers').value.trim();
+
+        if (!dateStr || !name) {
+            window.showAlert('Missing Information', 'Please select a date and an officer name.', 'warning');
+            return;
+        }
 
         try {
             const data = {
                 date: dateStr,
                 name: name,
-                newAccounts: accounts,
+                newAccounts: isNaN(accounts) ? 0 : accounts,
                 accountNumbers: accountNumbers
             };
 
@@ -211,9 +246,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.showToast(id ? 'Log updated successfully' : 'Log saved successfully');
             closeModal();
             loadLogs();
+            
+            // Proactively push to cloud
+            if (window.SyncManager && window.SyncManager.pushLocalToCloud) {
+                window.SyncManager.pushLocalToCloud();
+            }
         } catch (error) {
             console.error("Failed to save log:", error);
-            window.showAlert('Error', 'Error saving log. Please try again.', 'error');
+            window.showAlert('Error', 'Error saving log: ' + error.message, 'error');
         }
     }
 
