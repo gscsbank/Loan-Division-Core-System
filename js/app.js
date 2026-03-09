@@ -1,4 +1,12 @@
 // js/app.js
+
+window.parseCurrency = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    // Remove commas and other non-numeric chars except decimal point
+    const clean = val.toString().replace(/,/g, '');
+    return parseFloat(clean) || 0;
+};
 document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.querySelectorAll('.nav-link');
     const views = document.querySelectorAll('.module-view');

@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             const allLogs = await db.fuelLogs.toArray();
             const currentMonthLogs = allLogs.filter(log => log.date.startsWith(currentMonthStr));
-            const total = currentMonthLogs.reduce((sum, log) => sum + log.totalDistance, 0);
+            const total = currentMonthLogs.reduce((sum, log) => sum + (window.parseCurrency(log.totalDistance)), 0);
             if (dashFuelTotal) dashFuelTotal.innerText = total.toFixed(1);
         } catch (e) {
             console.error("Error updating dashboard fuel total:", e);
