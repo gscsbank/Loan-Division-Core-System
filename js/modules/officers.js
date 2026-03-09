@@ -275,7 +275,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTable(filteredLogs);
             updateSummary(filteredLogs);
 
-            const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             if (filterVal === currentMonthStr && printFilterVal === 'All') {
                 updateDashboard(filteredLogs);
             }

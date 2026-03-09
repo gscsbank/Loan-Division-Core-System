@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // A placeholder/mock chart for the dashboard overview
 let dbChartInstance = null;
-function initDashboardChart() {
+function initDashboardChart(labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], data = [0, 0, 0, 0, 0, 0]) {
     const ctx = document.getElementById('dashboardChart');
     if (!ctx) return;
 
@@ -88,10 +88,10 @@ function initDashboardChart() {
     dbChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: labels,
             datasets: [{
                 label: 'Savings Collected (Rs)',
-                data: [12000, 19000, 15000, 25000, 22000, 30000],
+                data: data,
                 backgroundColor: 'rgba(59, 130, 246, 0.8)', // Tailwind Blue-500
                 borderRadius: 6
             }]
@@ -100,12 +100,25 @@ function initDashboardChart() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return 'Rs. ' + context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                        }
+                    }
+                }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: { borderDash: [4, 4], color: '#e2e8f0' } // slate-200
+                    grid: { borderDash: [4, 4], color: '#e2e8f0' }, // slate-200
+                    ticks: {
+                        callback: function (value) {
+                            if (value >= 1000) return 'Rs. ' + (value / 1000) + 'k';
+                            return 'Rs. ' + value;
+                        }
+                    }
                 },
                 x: {
                     grid: { display: false }
@@ -114,6 +127,11 @@ function initDashboardChart() {
         }
     });
 }
+
+// Global function to update the dashboard chart from other modules
+window.updateDashboardChart = (labels, data) => {
+    initDashboardChart(labels, data);
+};
 
 // Global Notification Helpers
 window.showToast = (message, icon = 'success') => {

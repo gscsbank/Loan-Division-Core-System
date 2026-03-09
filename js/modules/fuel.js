@@ -167,7 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTable(filteredLogs);
             updateSummary(filteredLogs);
 
-            const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             if (filterVal === currentMonthStr && dashFuelTotal && !printFilterVal) {
                 const total = filteredLogs.reduce((sum, log) => sum + log.totalDistance, 0);
                 dashFuelTotal.innerText = total.toFixed(1);

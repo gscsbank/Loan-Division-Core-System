@@ -113,17 +113,32 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadAndRender() {
         try {
             const allLogs = await db.savings.orderBy('month').toArray();
-            const selectedYear = yearFilter ? parseInt(yearFilter.value) : today.getFullYear();
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const selectedYear = yearFilter ? parseInt(yearFilter.value) : currentYear;
             const yearLogs = allLogs.filter(log => log.month && log.month.startsWith(selectedYear.toString()));
 
             await renderPivotTable(yearLogs, selectedYear);
             await updateCharts(yearLogs, selectedYear);
 
-            // Dashboard total (current month)
-            const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+            // --- Main Dashboard Integration ---
+            // 1. Update Dashboard Stat Card (Current real-time Month)
+            const currentMonthStr = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             const currentMonthLogs = allLogs.filter(log => log.month === currentMonthStr);
             const total = currentMonthLogs.reduce((sum, log) => sum + log.collectionTotal, 0);
-            if (dashSavingsTotal) dashSavingsTotal.innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (dashSavingsTotal) {
+                dashSavingsTotal.innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            // 2. Update Dashboard Progress Chart (Dynamic data from database)
+            if (window.updateDashboardChart) {
+                const chartLabels = MONTHS.map(m => m.slice(0, 3));
+                const chartData = MONTH_KEYS.map(mk => {
+                    return allLogs.filter(l => l.month === `${currentYear}-${mk}`)
+                        .reduce((sum, l) => sum + l.collectionTotal, 0);
+                });
+                window.updateDashboardChart(chartLabels, chartData);
+            }
 
         } catch (error) {
             console.error("Failed to load savings logs:", error);
