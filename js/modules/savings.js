@@ -136,46 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await renderPivotTable(yearLogs, selectedYear);
             await updateCharts(yearLogs, selectedYear);
 
-            // --- Main Dashboard Integration ---
-            // 1. Update Dashboard Stat Card (Current real-time Month)
-            const currentMonthStr = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            const currentMonthLogs = allLogs.filter(log => log.month === currentMonthStr);
-            const total = currentMonthLogs.reduce((sum, log) => sum + (window.parseCurrency(log.collectionTotal)), 0);
-
-            // Detailed Dashboard Diagnostics
-            console.log(`%c Dashboard Diagnostics - ${currentMonthStr} `, "background: #4c1d95; color: #fff; font-weight: bold;");
-            if (currentMonthLogs.length > 0) {
-                console.table(currentMonthLogs.map(l => ({
-                    Date: l.date,
-                    Officer: l.officerName,
-                    "Target Month": l.month,
-                    "Collection (Raw)": l.collectionTotal,
-                    "Collection (Parsed)": window.parseCurrency(l.collectionTotal)
-                })));
-            } else {
-                console.warn(`No logs found for ${currentMonthStr}. Check database for month format mismatches.`);
-            }
-            console.log("Total Calculated for Dashboard:", total);
-
-            if (dashSavingsTotal) {
-                dashSavingsTotal.innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            }
-
-            // 2. Update Dashboard Progress Chart (Dynamic data from database)
-            if (window.updateDashboardChart) {
-                const chartLabels = MONTHS.map(m => m.slice(0, 3));
-                const chartData = MONTH_KEYS.map(mk => {
-                    return allLogs.filter(l => {
-                        let m = l.month;
-                        if (m && m.includes('-')) {
-                            const [y, mm] = m.split('-');
-                            m = `${y}-${mm.padStart(2, '0')}`;
-                        }
-                        return m === `${currentYear}-${mk}`;
-                    }).reduce((sum, l) => sum + (window.parseCurrency(l.collectionTotal)), 0);
-                });
-                window.updateDashboardChart(chartLabels, chartData);
-            }
 
         } catch (error) {
             console.error("Failed to load savings logs:", error);
